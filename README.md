@@ -42,7 +42,7 @@ class UserCommand(
         context.sender.sendMessage("추가 완료")
     }
 }
-
+```
 ```kotlin
 @Service
 class ExampleService {
