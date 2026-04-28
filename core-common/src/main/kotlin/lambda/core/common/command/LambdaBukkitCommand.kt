@@ -15,6 +15,8 @@ class LambdaBukkitCommand(
     private val executor: LambdaCommandExecutor
 ) : Command(name, description, "/$name", aliases) {
 
+    private val subInvoker = SubCommandInvoker(executor)
+
     override fun execute(
         sender: CommandSender,
         commandLabel: String,
@@ -32,6 +34,12 @@ class LambdaBukkitCommand(
             args = Array(args.size) { args[it] }
         )
 
+        // 👉 SubCommand 먼저 처리
+        if (subInvoker.invoke(context)) {
+            return true
+        }
+
+        // 👉 기본 execute
         return executor.execute(context)
     }
 
@@ -50,6 +58,9 @@ class LambdaBukkitCommand(
             label = alias,
             args = Array(args.size) { args[it] }
         )
+
+        val sub = subInvoker.tabComplete(context)
+        if (sub.isNotEmpty()) return sub.toMutableList()
 
         return executor.tabComplete(context).toMutableList()
     }

@@ -6,6 +6,8 @@ import lambda.core.api.di.Service
 import lambda.core.common.command.LambdaCommandManager
 import lambda.core.common.di.BeanContainer
 import lambda.core.common.di.ClassScanner
+import org.bukkit.Bukkit
+import org.bukkit.event.Listener
 import org.bukkit.plugin.Plugin
 
 class LambdaCoreBootstrap(
@@ -37,10 +39,18 @@ class LambdaCoreBootstrap(
             }
         }
 
+        // 3. Listener 자동 등록
+        classes.forEach { clazz ->
+            if (Listener::class.java.isAssignableFrom(clazz)) {
+                val instance = container.get(clazz.kotlin) as Listener
+                Bukkit.getPluginManager().registerEvents(instance, plugin)
+            }
+        }
+
         return this
     }
 
     fun start() {
-        plugin.logger.info("LambdaCore DI started.")
+        plugin.logger.info("LambdaCore DI + Command + Event started.")
     }
 }
