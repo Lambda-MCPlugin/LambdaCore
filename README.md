@@ -14,15 +14,6 @@ LambdaCore는 Folia 환경을 포함한 최신 Minecraft 서버에서
 
 ---
 
-## Core Philosophy
-
-- 반복 코드 제거 (Boilerplate 최소화)
-- 안전한 비동기 처리
-- 구조적인 코드 작성
-- 확장 가능한 아키텍처
-
----
-
 ## Features
 
 - 어노테이션 기반 Command 시스템
@@ -51,3 +42,21 @@ class UserCommand(
         context.sender.sendMessage("추가 완료")
     }
 }
+
+```kotlin
+@Service
+class ExampleService {
+    fun message() = "LambdaCore"
+}
+
+@LambdaCommand("test")
+class TestCommand(
+    private val service: ExampleService
+) : LambdaCommandExecutor {
+
+    override fun execute(context: LambdaCommandContext): Boolean {
+        context.sender.sendMessage(service.message())
+        return true
+    }
+}
+
