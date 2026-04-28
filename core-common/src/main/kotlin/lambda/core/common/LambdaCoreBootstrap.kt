@@ -48,7 +48,8 @@ class LambdaCoreBootstrap(
         return this
     }
 
-    fun start() {
+    fun start(): LambdaCoreBootstrap {
         plugin.logger.info("LambdaCore bootstrap started.")
+        return this
     }
 }

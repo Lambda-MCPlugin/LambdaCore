@@ -2,6 +2,7 @@ package lambda.core.plugin.command
 
 import lambda.core.api.command.*
 import lambda.core.common.LambdaCoreProvider
+import lambda.core.plugin.LambdaCorePlugin
 
 @LambdaCommand(
     name = "lambdacore",
