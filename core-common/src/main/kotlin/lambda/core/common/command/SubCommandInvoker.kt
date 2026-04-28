@@ -3,9 +3,11 @@ package lambda.core.common.command
 import lambda.core.api.async.Async
 import lambda.core.api.command.LambdaCommandContext
 import lambda.core.api.command.SubCommand
+import lambda.core.api.cooldown.Cooldown
 import lambda.core.api.permission.Permission
 import lambda.core.common.LambdaCoreProvider
 import lambda.core.common.command.argument.ArgumentRegistry
+import lambda.core.common.cooldown.CooldownManager
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.declaredFunctions
 import kotlin.reflect.jvm.javaType
@@ -18,6 +20,11 @@ class SubCommandInvoker(
         val path: List<String>,
         val function: KFunction<*>
     )
+
+    private val classCooldown: Cooldown? =
+        instance::class.annotations
+            .filterIsInstance<Cooldown>()
+            .firstOrNull()
 
     private val subCommands: List<RegisteredSubCommand> = buildList {
         val functions = instance::class.declaredFunctions
@@ -59,6 +66,18 @@ class SubCommandInvoker(
 
         if (permission != null && !context.sender.hasPermission(permission.value)) {
             context.sender.sendMessage(permission.message)
+            return true
+        }
+
+        val commandKey = matched.path.joinToString(" ")
+
+        if (!CooldownManager.check(
+                sender = context.sender,
+                commandKey = commandKey,
+                function = function,
+                classCooldown = classCooldown
+            )
+        ) {
             return true
         }
 

@@ -6,11 +6,13 @@ import lambda.core.api.database.DatabaseManager
 import lambda.core.api.di.Component
 import lambda.core.api.di.Repository
 import lambda.core.api.di.Service
+import lambda.core.api.event.EventListener
 import lambda.core.common.command.LambdaCommandManager
 import lambda.core.common.database.AsyncDatabaseTemplate
 import lambda.core.common.database.DatabaseTemplate
 import lambda.core.common.di.BeanContainer
 import lambda.core.common.di.ClassScanner
+import lambda.core.common.event.LambdaEventRegistrar
 import org.bukkit.Bukkit
 import org.bukkit.event.Listener
 import org.bukkit.plugin.Plugin
@@ -20,7 +22,9 @@ class LambdaCoreBootstrap(
 ) {
 
     val container = BeanContainer(plugin)
+
     private val commandManager = LambdaCommandManager(plugin)
+    private val eventRegistrar = LambdaEventRegistrar(plugin)
 
     fun scan(packageName: String): LambdaCoreBootstrap {
         registerCoreBeans()
@@ -32,7 +36,8 @@ class LambdaCoreBootstrap(
                 clazz.isAnnotationPresent(Component::class.java) ||
                 clazz.isAnnotationPresent(Service::class.java) ||
                 clazz.isAnnotationPresent(Repository::class.java) ||
-                clazz.isAnnotationPresent(Config::class.java)
+                clazz.isAnnotationPresent(Config::class.java) ||
+                hasEventListenerMethod(clazz)
             ) {
                 container.register(clazz.kotlin)
             }
@@ -52,7 +57,20 @@ class LambdaCoreBootstrap(
             }
         }
 
+        classes.forEach { clazz ->
+            if (hasEventListenerMethod(clazz)) {
+                val instance = container.get(clazz.kotlin)
+                eventRegistrar.register(instance)
+            }
+        }
+
         return this
+    }
+
+    private fun hasEventListenerMethod(clazz: Class<*>): Boolean {
+        return clazz.declaredMethods.any { method ->
+            method.isAnnotationPresent(EventListener::class.java)
+        }
     }
 
     private fun registerCoreBeans() {
