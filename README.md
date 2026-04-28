@@ -1,4 +1,4 @@
-# LambdaCore / next-generation Minecraft plugin framework
+# LambdaCore
 
 [![Kotlin](https://img.shields.io/badge/kotlin-2.x-blue.svg?logo=kotlin)](http://kotlinlang.org)
 [![Platform](https://img.shields.io/badge/platform-Folia%20%7C%20Paper-blue.svg)]()
