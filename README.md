@@ -1,44 +1,53 @@
-# LambdaCore / next-generation Minecraft plugin framework
+# LambdaCore
 
 [![Kotlin](https://img.shields.io/badge/kotlin-2.x-blue.svg?logo=kotlin)](http://kotlinlang.org)
 [![Platform](https://img.shields.io/badge/platform-Folia%20%7C%20Paper-blue.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-green.svg)]()
 
-### Spigot / Paper / Folia 환경을 더 생산적이고 직관적으로 만들어주는 프레임워크
+### Minecraft 플러그인 개발을 위한 Kotlin 기반 통합 프레임워크
 
-LambdaCore는 Spring Framework에서 영감을 받아  
-Minecraft 플러그인 개발을 더 구조적이고 간결하게 만들기 위해 제작된 Kotlin 기반 프레임워크입니다.
+LambdaCore는 Folia 환경을 포함한 최신 Minecraft 서버에서  
+플러그인 개발을 더 빠르고 안전하게 만들기 위해 설계된 프레임워크입니다.
+
+단순한 라이브러리가 아닌,  
+**Command / Scheduler / Config / Database를 하나의 구조로 통합**합니다.
+
+---
+
+## Core Philosophy
+
+- 반복 코드 제거 (Boilerplate 최소화)
+- 안전한 비동기 처리
+- 구조적인 코드 작성
+- 확장 가능한 아키텍처
 
 ---
 
 ## Features
 
-* [DI (Dependency Injection)](#di)
-* [Command Framework](#command-framework)
-* [Scheduler (Folia)](#scheduler)
-* [Config System](#config-system)
-* [Database (HikariCP)](#database)
-* [Async + Thread Safe](#async--thread-safe)
+- 어노테이션 기반 Command 시스템
+- SubCommand depth (`/lc user add`)
+- Argument 자동 변환 및 TabComplete
+- DI 컨테이너 (Constructor Injection)
+- Config 자동 매핑 + reload
+- Event 자동 등록
+- Folia 전용 Scheduler
+- HikariCP 기반 Database
+- Async DB + Thread-safe 실행
 
 ---
 
-## DI
-
-LambdaCore는 생성자 기반 의존성 주입을 제공합니다.
+## Example
 
 ```kotlin
-@Service
-class ExampleService {
-    fun message() = "LambdaCore"
-}
-
-@LambdaCommand("test")
-class TestCommand(
-    private val service: ExampleService
+@LambdaCommand("user")
+class UserCommand(
+    private val service: UserService
 ) : LambdaCommandExecutor {
 
-    override fun execute(context: LambdaCommandContext): Boolean {
-        context.sender.sendMessage(service.message())
-        return true
+    @SubCommand("add")
+    fun add(context: LambdaCommandContext, player: Player) {
+        service.add(player)
+        context.sender.sendMessage("추가 완료")
     }
 }
