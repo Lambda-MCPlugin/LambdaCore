@@ -1,8 +1,10 @@
 package lambda.core.common.command
 
+import lambda.core.api.async.Async
 import lambda.core.api.command.LambdaCommandContext
 import lambda.core.api.command.SubCommand
 import lambda.core.api.permission.Permission
+import lambda.core.common.LambdaCoreProvider
 import lambda.core.common.command.argument.ArgumentRegistry
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.declaredFunctions
@@ -66,7 +68,20 @@ class SubCommandInvoker(
             subCommandDepth = matched.path.size
         ) ?: return true
 
-        function.call(instance, *args.toTypedArray())
+        val isAsync = function.annotations.any { it is Async }
+
+        if (isAsync) {
+            LambdaCoreProvider.scheduler?.runAsync(context.plugin) {
+                try {
+                    function.call(instance, *args.toTypedArray())
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            } ?: context.sender.sendMessage("§cScheduler가 초기화되지 않았습니다.")
+        } else {
+            function.call(instance, *args.toTypedArray())
+        }
+
         return true
     }
 
