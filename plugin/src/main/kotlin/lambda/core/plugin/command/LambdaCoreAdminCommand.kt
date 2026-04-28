@@ -17,7 +17,11 @@ class LambdaCoreAdminCommand : LambdaCommandExecutor {
 
     @SubCommand("reload")
     fun reload(context: LambdaCommandContext) {
-        context.sender.sendMessage("§a리로드 완료")
+        val plugin = context.plugin as LambdaCorePlugin
+
+        plugin.reloadConfigBeans()
+
+        context.sender.sendMessage("§aConfig reload 완료")
     }
 
     @SubCommand("scheduler")

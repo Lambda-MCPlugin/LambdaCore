@@ -1,6 +1,7 @@
 package lambda.core.common
 
 import lambda.core.api.command.LambdaCommand
+import lambda.core.api.config.Config
 import lambda.core.api.di.Component
 import lambda.core.api.di.Service
 import lambda.core.common.command.LambdaCommandManager
@@ -14,24 +15,22 @@ class LambdaCoreBootstrap(
     private val plugin: Plugin
 ) {
 
-    private val container = BeanContainer()
+    val container = BeanContainer(plugin)
     private val commandManager = LambdaCommandManager(plugin)
 
     fun scan(packageName: String): LambdaCoreBootstrap {
-
         val classes = ClassScanner.scan(packageName)
 
-        // 1. Bean 등록
         classes.forEach { clazz ->
             if (
                 clazz.isAnnotationPresent(Component::class.java) ||
-                clazz.isAnnotationPresent(Service::class.java)
+                clazz.isAnnotationPresent(Service::class.java) ||
+                clazz.isAnnotationPresent(Config::class.java)
             ) {
                 container.register(clazz.kotlin)
             }
         }
 
-        // 2. Command 등록
         classes.forEach { clazz ->
             if (clazz.isAnnotationPresent(LambdaCommand::class.java)) {
                 val instance = container.get(clazz.kotlin)
@@ -39,7 +38,6 @@ class LambdaCoreBootstrap(
             }
         }
 
-        // 3. Listener 자동 등록
         classes.forEach { clazz ->
             if (Listener::class.java.isAssignableFrom(clazz)) {
                 val instance = container.get(clazz.kotlin) as Listener
@@ -51,6 +49,6 @@ class LambdaCoreBootstrap(
     }
 
     fun start() {
-        plugin.logger.info("LambdaCore DI + Command + Event started.")
+        plugin.logger.info("LambdaCore bootstrap started.")
     }
 }
