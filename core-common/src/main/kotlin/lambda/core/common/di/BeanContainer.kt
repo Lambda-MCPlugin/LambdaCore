@@ -11,7 +11,19 @@ class BeanContainer(
 ) {
 
     private val beans = mutableMapOf<KClass<*>, Any>()
-    private val configBeans = mutableSetOf<KClass<*>>() // config만 추적
+    private val configBeans = mutableSetOf<KClass<*>>()
+
+    init {
+        registerInstance(Plugin::class, plugin)
+    }
+
+    fun registerInstance(clazz: KClass<*>, instance: Any) {
+        beans[clazz] = instance
+    }
+
+    inline fun <reified T : Any> registerInstance(instance: T) {
+        registerInstance(T::class, instance)
+    }
 
     fun register(clazz: KClass<*>) {
         if (beans.containsKey(clazz)) return
@@ -34,7 +46,9 @@ class BeanContainer(
             ?: error("${clazz.simpleName} primary constructor 없음")
 
         val params = constructor.parameters.map { param ->
-            val type = param.type.classifier as KClass<*>
+            val type = param.type.classifier as? KClass<*>
+                ?: error("${clazz.simpleName} 생성자 파라미터 타입 확인 실패")
+
             get(type)
         }
 
@@ -45,7 +59,7 @@ class BeanContainer(
     fun get(clazz: KClass<*>): Any {
         return beans[clazz] ?: run {
             register(clazz)
-            beans[clazz]!!
+            beans[clazz] ?: error("${clazz.simpleName} Bean 생성 실패")
         }
     }
 
@@ -53,7 +67,6 @@ class BeanContainer(
         return get(T::class) as T
     }
 
-    // 핵심: config만 reload
     fun reloadConfigs() {
         for (clazz in configBeans) {
             val config = clazz.java.getAnnotation(Config::class.java) ?: continue
