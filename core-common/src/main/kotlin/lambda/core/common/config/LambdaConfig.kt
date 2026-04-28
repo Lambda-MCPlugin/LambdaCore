@@ -1,9 +1,11 @@
 package lambda.core.common.config
 
+import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.plugin.Plugin
 import java.io.File
 import kotlin.reflect.KClass
+import kotlin.reflect.KParameter
 import kotlin.reflect.full.primaryConstructor
 
 object LambdaConfig {
@@ -20,10 +22,10 @@ object LambdaConfig {
         fileName: String,
         clazz: KClass<T>
     ): T {
-
         val file = File(plugin.dataFolder, fileName)
 
         if (!file.exists()) {
+            plugin.dataFolder.mkdirs()
             plugin.saveResource(fileName, false)
         }
 
@@ -33,18 +35,60 @@ object LambdaConfig {
     }
 
     private fun <T : Any> mapToClass(
-        yaml: YamlConfiguration,
+        section: ConfigurationSection,
         clazz: KClass<T>
     ): T {
-
         val constructor = clazz.primaryConstructor
             ?: error("No primary constructor for ${clazz.simpleName}")
 
-        val args = constructor.parameters.associateWith { param ->
-            val key = param.name ?: return@associateWith null
-            yaml.get(key)
+        val args = mutableMapOf<KParameter, Any?>()
+
+        for (param in constructor.parameters) {
+            val key = param.name ?: continue
+
+            if (!section.contains(key)) {
+                continue
+            }
+
+            val type = param.type.classifier as? KClass<*>
+                ?: continue
+
+            val value = readValue(section, key, type)
+
+            args[param] = value
         }
 
         return constructor.callBy(args)
+    }
+
+    private fun readValue(
+        section: ConfigurationSection,
+        key: String,
+        type: KClass<*>
+    ): Any? {
+        return when {
+            type == String::class -> section.getString(key)
+            type == Int::class -> section.getInt(key)
+            type == Long::class -> section.getLong(key)
+            type == Double::class -> section.getDouble(key)
+            type == Boolean::class -> section.getBoolean(key)
+
+            type.java.isEnum -> {
+                val raw = section.getString(key) ?: return null
+
+                type.java.enumConstants
+                    .filterIsInstance<Enum<*>>()
+                    .firstOrNull { it.name.equals(raw, ignoreCase = true) }
+            }
+
+            section.isConfigurationSection(key) -> {
+                val child = section.getConfigurationSection(key)
+                    ?: return null
+
+                mapToClass(child, type as KClass<Any>)
+            }
+
+            else -> section.get(key)
+        }
     }
 }

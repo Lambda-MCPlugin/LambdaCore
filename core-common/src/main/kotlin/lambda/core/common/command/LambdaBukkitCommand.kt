@@ -12,6 +12,7 @@ class LambdaBukkitCommand(
     description: String,
     aliases: List<String>,
     private val commandPermission: String,
+    private val permissionMessage: String,
     private val executor: LambdaCommandExecutor
 ) : Command(name, description, "/$name", aliases) {
 
@@ -23,7 +24,7 @@ class LambdaBukkitCommand(
         args: Array<out String>
     ): Boolean {
         if (commandPermission.isNotBlank() && !sender.hasPermission(commandPermission)) {
-            sender.sendMessage("§c권한이 없습니다.")
+            sender.sendMessage(permissionMessage)
             return true
         }
 
@@ -34,12 +35,10 @@ class LambdaBukkitCommand(
             args = Array(args.size) { args[it] }
         )
 
-        // 👉 SubCommand 먼저 처리
         if (subInvoker.invoke(context)) {
             return true
         }
 
-        // 👉 기본 execute
         return executor.execute(context)
     }
 
@@ -60,7 +59,9 @@ class LambdaBukkitCommand(
         )
 
         val sub = subInvoker.tabComplete(context)
-        if (sub.isNotEmpty()) return sub.toMutableList()
+        if (sub.isNotEmpty()) {
+            return sub.toMutableList()
+        }
 
         return executor.tabComplete(context).toMutableList()
     }

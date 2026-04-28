@@ -27,8 +27,8 @@ class LambdaCoreAdminCommand : LambdaCommandExecutor {
 
     @SubCommand("scheduler")
     fun scheduler(context: LambdaCommandContext) {
-        LambdaCoreProvider.scheduler.runGlobal(context.plugin) {
+        LambdaCoreProvider.scheduler?.runGlobal(context.plugin) {
             context.sender.sendMessage("§aScheduler 테스트 완료")
-        }
+        } ?: context.sender.sendMessage("§cScheduler가 초기화되지 않았습니다.")
     }
 }

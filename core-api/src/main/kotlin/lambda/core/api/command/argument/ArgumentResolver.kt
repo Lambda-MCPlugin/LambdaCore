@@ -10,4 +10,12 @@ interface ArgumentResolver<T : Any> {
         sender: CommandSender,
         input: String
     ): T?
+
+    // TabComplete 추가
+    fun suggest(
+        sender: CommandSender,
+        input: String
+    ): List<String> {
+        return emptyList()
+    }
 }
