@@ -16,6 +16,9 @@ dependencies {
     implementation("org.mariadb.jdbc:mariadb-java-client:3.5.8")
     implementation("org.xerial:sqlite-jdbc:3.53.0.0")
 
+    implementation(project(":nms:v1_21_R1"))
+    implementation(project(":nms:v1_21_R2"))
+
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
 }
 

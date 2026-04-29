@@ -19,5 +19,7 @@ include(
     "core-api",
     "core-common",
     "platform-folia",
-    "plugin"
+    "plugin",
+    "nms:v1_21_R1",
+    "nms:v1_21_R2"
 )

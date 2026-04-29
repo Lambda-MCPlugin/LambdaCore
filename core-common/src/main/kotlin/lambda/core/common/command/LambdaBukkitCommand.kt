@@ -4,6 +4,7 @@ import lambda.core.api.command.LambdaCommandContext
 import lambda.core.api.command.LambdaCommandExecutor
 import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
+import org.bukkit.command.CommandException
 import org.bukkit.plugin.Plugin
 
 class LambdaBukkitCommand(
@@ -17,6 +18,13 @@ class LambdaBukkitCommand(
 ) : Command(name, description, "/$name", aliases) {
 
     private val subInvoker = SubCommandInvoker(executor)
+
+    init {
+        if (commandPermission.isNotBlank()) {
+            setPermission(commandPermission)
+            setPermissionMessage(this.permissionMessage)
+        }
+    }
 
     override fun execute(
         sender: CommandSender,
@@ -35,11 +43,24 @@ class LambdaBukkitCommand(
             args = Array(args.size) { args[it] }
         )
 
-        if (subInvoker.invoke(context)) {
-            return true
-        }
+        try {
+            if (subInvoker.invoke(context)) {
+                return true
+            }
 
-        return executor.execute(context)
+            val result = executor.execute(context)
+
+            if (!result && subInvoker.hasSubCommands()) {
+                subInvoker.sendHelp(context)
+                return true
+            }
+
+            return result
+        } catch (e: Exception) {
+            plugin.logger.severe("Error while executing command '/$commandLabel': ${e.message}")
+            e.printStackTrace()
+            throw CommandException("Unhandled exception executing command '/$commandLabel' in ${plugin.name}", e)
+        }
     }
 
     override fun tabComplete(
@@ -59,6 +80,7 @@ class LambdaBukkitCommand(
         )
 
         val sub = subInvoker.tabComplete(context)
+
         if (sub.isNotEmpty()) {
             return sub.toMutableList()
         }

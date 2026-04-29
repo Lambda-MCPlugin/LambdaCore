@@ -8,4 +8,9 @@ data class LambdaCommandContext(
     val sender: CommandSender,
     val label: String,
     val args: Array<String>
-)
+) {
+
+    fun reply(message: String) {
+        sender.sendMessage(message)
+    }
+}

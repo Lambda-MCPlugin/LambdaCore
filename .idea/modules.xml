@@ -4,6 +4,8 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/core-api/LambdaCore.core-api.main.iml" filepath="$PROJECT_DIR$/.idea/modules/core-api/LambdaCore.core-api.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/core-common/LambdaCore.core-common.main.iml" filepath="$PROJECT_DIR$/.idea/modules/core-common/LambdaCore.core-common.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/nms/v1_21_R1/LambdaCore.nms.v1_21_R1.main.iml" filepath="$PROJECT_DIR$/.idea/modules/nms/v1_21_R1/LambdaCore.nms.v1_21_R1.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/nms/v1_21_R2/LambdaCore.nms.v1_21_R2.main.iml" filepath="$PROJECT_DIR$/.idea/modules/nms/v1_21_R2/LambdaCore.nms.v1_21_R2.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/platform-folia/LambdaCore.platform-folia.main.iml" filepath="$PROJECT_DIR$/.idea/modules/platform-folia/LambdaCore.platform-folia.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/plugin/LambdaCore.plugin.main.iml" filepath="$PROJECT_DIR$/.idea/modules/plugin/LambdaCore.plugin.main.iml" />
     </modules>

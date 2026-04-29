@@ -14,4 +14,18 @@ class OfflinePlayerResolver : ArgumentResolver<OfflinePlayer> {
     override fun resolve(sender: CommandSender, input: String): OfflinePlayer? {
         return Bukkit.getOfflinePlayer(input)
     }
+
+    override fun suggest(sender: CommandSender, input: String): List<String> {
+        val lower = input.lowercase()
+
+        val online = Bukkit.getOnlinePlayers()
+            .map { it.name }
+            .filter { it.lowercase().startsWith(lower) }
+
+        val offline = Bukkit.getOfflinePlayers()
+            .mapNotNull { it.name }
+            .filter { it.lowercase().startsWith(lower) }
+
+        return (online + offline).distinct()
+    }
 }

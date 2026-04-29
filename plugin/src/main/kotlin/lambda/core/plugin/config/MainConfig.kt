@@ -7,5 +7,6 @@ import lambda.core.api.database.DatabaseConfig
 data class MainConfig(
     val prefix: String = "[LambdaCore]",
     val debug: Boolean = false,
-    val database: DatabaseConfig = DatabaseConfig()
+    val database: DatabaseConfig = DatabaseConfig(),
+    val starters: StarterConfig = StarterConfig()
 )

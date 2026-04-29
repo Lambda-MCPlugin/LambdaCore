@@ -1,13 +1,16 @@
 package lambda.core.common.command
 
 import lambda.core.api.async.Async
+import lambda.core.api.command.Description
 import lambda.core.api.command.LambdaCommandContext
 import lambda.core.api.command.SubCommand
+import lambda.core.api.command.Usage
 import lambda.core.api.cooldown.Cooldown
 import lambda.core.api.permission.Permission
 import lambda.core.common.LambdaCoreProvider
 import lambda.core.common.command.argument.ArgumentRegistry
 import lambda.core.common.cooldown.CooldownManager
+import org.bukkit.ChatColor
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.declaredFunctions
 import kotlin.reflect.jvm.javaType
@@ -18,7 +21,8 @@ class SubCommandInvoker(
 
     private data class RegisteredSubCommand(
         val path: List<String>,
-        val function: KFunction<*>
+        val function: KFunction<*>,
+        val primaryName: String
     )
 
     private val classCooldown: Cooldown? =
@@ -36,19 +40,52 @@ class SubCommandInvoker(
 
             add(
                 RegisteredSubCommand(
-                    path = annotation.name.lowercase().split(" "),
-                    function = function
+                    path = annotation.name.lowercase().split(" ").filter { it.isNotBlank() },
+                    function = function,
+                    primaryName = annotation.name
                 )
             )
 
             for (alias in annotation.aliases) {
                 add(
                     RegisteredSubCommand(
-                        path = alias.lowercase().split(" "),
-                        function = function
+                        path = alias.lowercase().split(" ").filter { it.isNotBlank() },
+                        function = function,
+                        primaryName = annotation.name
                     )
                 )
             }
+        }
+    }
+
+    fun hasSubCommands(): Boolean {
+        return subCommands.isNotEmpty()
+    }
+
+    fun sendHelp(context: LambdaCommandContext) {
+        val sender = context.sender
+        val label = context.label
+
+        sender.sendMessage("/$label")
+
+        val uniqueCommands = subCommands
+            .distinctBy { it.primaryName }
+            .sortedBy { it.primaryName }
+
+        if (uniqueCommands.isEmpty()) {
+            sender.sendMessage(" \u2514\u2500 등록된 하위 명령어가 없습니다.")
+            return
+        }
+
+        uniqueCommands.forEachIndexed { index, subCommand ->
+            val description = subCommand.function.annotations
+                .filterIsInstance<Description>()
+                .firstOrNull()
+                ?.value ?: "설명 없음"
+
+            val branch = if (index == uniqueCommands.lastIndex) " \u2514\u2500 " else " \u251C\u2500 "
+            val line = "$branch${subCommand.primaryName} &7- $description"
+            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', line))
         }
     }
 
@@ -84,7 +121,8 @@ class SubCommandInvoker(
         val args = buildArguments(
             function = function,
             context = context,
-            subCommandDepth = matched.path.size
+            subCommandDepth = matched.path.size,
+            subCommandName = matched.primaryName
         ) ?: return true
 
         val isAsync = function.annotations.any { it is Async }
@@ -96,7 +134,7 @@ class SubCommandInvoker(
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
-            } ?: context.sender.sendMessage("§cScheduler가 초기화되지 않았습니다.")
+            } ?: context.sender.sendMessage("Scheduler is not initialized.")
         } else {
             function.call(instance, *args.toTypedArray())
         }
@@ -121,7 +159,8 @@ class SubCommandInvoker(
     private fun buildArguments(
         function: KFunction<*>,
         context: LambdaCommandContext,
-        subCommandDepth: Int
+        subCommandDepth: Int,
+        subCommandName: String
     ): List<Any?>? {
         val result = mutableListOf<Any?>()
         val params = function.parameters.drop(1)
@@ -137,10 +176,15 @@ class SubCommandInvoker(
             }
 
             val input = context.args.getOrNull(argIndex)
-                ?: run {
-                    context.sender.sendMessage("§c인자가 부족합니다.")
-                    return null
-                }
+
+            if (input == null) {
+                sendUsage(
+                    context = context,
+                    function = function,
+                    subCommandName = subCommandName
+                )
+                return null
+            }
 
             val resolver = ArgumentRegistry.find(type)
 
@@ -153,11 +197,16 @@ class SubCommandInvoker(
                         ?.firstOrNull { it.name.equals(input, ignoreCase = true) }
                 }
 
-                else -> error("Resolver 없음: $type")
+                else -> error("Resolver not found: $type")
             }
 
             if (value == null) {
-                context.sender.sendMessage("§c잘못된 값: $input")
+                context.sender.sendMessage("Invalid value: $input")
+                sendUsage(
+                    context = context,
+                    function = function,
+                    subCommandName = subCommandName
+                )
                 return null
             }
 
@@ -166,6 +215,52 @@ class SubCommandInvoker(
         }
 
         return result
+    }
+
+    private fun sendUsage(
+        context: LambdaCommandContext,
+        function: KFunction<*>,
+        subCommandName: String
+    ) {
+        val usage = function.annotations
+            .filterIsInstance<Usage>()
+            .firstOrNull()
+            ?.value
+
+        if (usage != null) {
+            context.sender.sendMessage("입력 형식: $usage")
+            return
+        }
+
+        val generatedUsage = generateUsage(
+            label = context.label,
+            subCommandName = subCommandName,
+            function = function
+        )
+
+        context.sender.sendMessage("입력 형식: $generatedUsage")
+    }
+
+    private fun generateUsage(
+        label: String,
+        subCommandName: String,
+        function: KFunction<*>
+    ): String {
+        val params = function.parameters
+            .drop(1)
+            .filter { param ->
+                val type = param.type.javaType as Class<*>
+                type != LambdaCommandContext::class.java
+            }
+            .joinToString(" ") { param ->
+                "<${param.name ?: "arg"}>"
+            }
+
+        return if (params.isBlank()) {
+            "/$label $subCommandName"
+        } else {
+            "/$label $subCommandName $params"
+        }
     }
 
     fun tabComplete(context: LambdaCommandContext): List<String> {

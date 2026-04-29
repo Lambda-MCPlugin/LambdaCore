@@ -45,15 +45,16 @@ object LambdaConfig {
 
         for (param in constructor.parameters) {
             val key = param.name ?: continue
+            val resolvedKey = resolveKey(section, key)
 
-            if (!section.contains(key)) {
+            if (resolvedKey == null) {
                 continue
             }
 
             val type = param.type.classifier as? KClass<*>
                 ?: continue
 
-            val value = readValue(section, key, type)
+            val value = readValue(section, resolvedKey, type)
 
             args[param] = value
         }
@@ -90,5 +91,26 @@ object LambdaConfig {
 
             else -> section.get(key)
         }
+    }
+
+    private fun resolveKey(
+        section: ConfigurationSection,
+        originalKey: String
+    ): String? {
+        val candidates = listOf(
+            originalKey,
+            camelToKebab(originalKey),
+            originalKey.replace("_", "-"),
+            originalKey.replace("-", "_")
+        ).distinct()
+
+        return candidates.firstOrNull { candidate ->
+            section.contains(candidate)
+        }
+    }
+
+    private fun camelToKebab(value: String): String {
+        return value.replace(Regex("([a-z0-9])([A-Z])"), "$1-$2")
+            .lowercase()
     }
 }

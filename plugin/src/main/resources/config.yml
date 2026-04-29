@@ -2,7 +2,7 @@ prefix: "[LambdaCore]"
 debug: false
 
 database:
-  enabled: false
+  enabled: true
   type: SQLITE
 
   host: "localhost"
@@ -18,3 +18,6 @@ database:
   connectionTimeout: 30000
   idleTimeout: 600000
   maxLifetime: 1800000
+
+starters:
+  user: true

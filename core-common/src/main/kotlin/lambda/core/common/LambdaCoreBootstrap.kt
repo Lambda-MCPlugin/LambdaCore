@@ -29,7 +29,10 @@ class LambdaCoreBootstrap(
     fun scan(packageName: String): LambdaCoreBootstrap {
         registerCoreBeans()
 
-        val classes = ClassScanner.scan(packageName)
+        val classes = ClassScanner.scan(
+            packageName = packageName,
+            classLoader = plugin.javaClass.classLoader
+        )
 
         classes.forEach { clazz ->
             if (
