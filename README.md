@@ -6,9 +6,6 @@
 
 ### Spigot / Paper / Folia 환경을 더 생산적이고 직관적으로 만들어주는 프레임워크
 
-LambdaCore는 Spring Framework에서 영감을 받아  
-Minecraft 플러그인 개발을 더 구조적이고 간결하게 만들기 위해 제작된 Kotlin 기반 프레임워크입니다.
-
 ---
 
 ## Features
